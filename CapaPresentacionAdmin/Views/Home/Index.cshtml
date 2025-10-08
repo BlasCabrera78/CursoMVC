@@ -1,5 +1,5 @@
-﻿@{
-    ViewBag.Title = "Home Page";
+﻿@{﻿
+   ViewBag.Title = "Home Page";
 }
 
 <h1 class="mt-4">Dashboard</h1>
@@ -98,7 +98,7 @@
             </div>
         </form>
 
-        <hr/>
+        <hr />
 
         <div class="row">
             <div class="col-sm-12">
@@ -115,7 +115,6 @@
                         </tr>
                     </thead>
                     <tbody>
-
                     </tbody>
                 </table>
             </div>
@@ -129,6 +128,11 @@
 @section scripts
     {
     <script>
+
+        $("#txtFechainicio").datepicker({dateFormat: "dd/mm/yy"}).datepicker('setDate', new Date());
+        $("#txtFechafin").datepicker({ dateFormat: "dd/mm/yy" }).datepicker('setDate', new Date());
+
+
         jQuery.ajax({
         url: '@Url.Action("VistaDashBoard", "Home")',
         type: "GET",
@@ -145,4 +149,4 @@
         }
     });
     </script>
-    }
+}
