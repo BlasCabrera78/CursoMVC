@@ -31,20 +31,71 @@ namespace CapaPresentacionAdmin.Controllers
         {
             Usuario oUsuario = new Usuario();
 
-            oUsuario = new CN_Usuarios().Listar().Where(u => u.Correo == correo && u.Clave == CN_Recursos.ConvertirSha256(clave)).FirstOrDefault();
+            oUsuario = new CN_Usuarios().Listar()
+                .Where(u => u.Correo == correo && u.Clave == CN_Recursos.ConvertirSha256(clave))
+                .FirstOrDefault();
 
             if (oUsuario == null)
             {
-                ViewBag.Error = "Correro o CLave incorrectos";
+                ViewBag.Error = "Correo o contraseña no correcta";
                 return View();
             }
-            else 
+            else
             {
+                if (oUsuario.Reestablecer)
+                {
+                    TempData["IdUsuario"] = oUsuario.IdUsuario;
+                    return RedirectToAction("CambiarClave");
+                }
+
                 ViewBag.Error = null;
+
                 return RedirectToAction("Index", "Home");
             }
 
-                return View();
         }
+
+        [HttpPost]
+        public ActionResult CambiarClave(string idusuario, string claveactual, string nuevaclave, string confirmarclave)
+        {
+            Usuario oUsuario = new Usuario();
+
+            oUsuario = new CN_Usuarios().Listar()
+                .Where(u => u.IdUsuario == int.Parse(idusuario)).FirstOrDefault();
+
+            if (oUsuario.Clave != CN_Recursos.ConvertirSha256(claveactual))
+            {
+                TempData["IdUsuario"] = idusuario;
+                ViewBag.Error = "La contraseña actual no es correcta";
+                return View();
+            }
+            else if (nuevaclave != confirmarclave)
+            {
+                TempData["IdUsuario"] = idusuario;
+                ViewData["vclave"] = claveactual;
+                ViewBag.Error = "Las contraseñas no coinciden";
+                return View();
+            }
+            ViewData["vclave"] = "";
+            CN_Recursos.ConvertirSha256(nuevaclave);
+
+            string mensaje = string.Empty;
+
+            bool respuesta = new CN_Usuarios().CambiarClave( int.Parse(idusuario), nuevaclave, out mensaje);
+
+            if (respuesta)
+            {
+                return RedirectToAction("Index");
+            }
+            else 
+            {
+                TempData["IdUsuario"] = idusuario;
+                ViewBag.Error = mensaje;
+                return View();
+            }
+
+           
+        }
+
     }
 }
