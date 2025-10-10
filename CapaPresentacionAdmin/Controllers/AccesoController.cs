@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
+using System.Web.Security;
 using CapaEntidades;
 using CapaNegocios;
 
 namespace CapaPresentacionAdmin.Controllers
 {
+  
     public class AccesoController : Controller
     {
         // GET: Acceso
@@ -48,6 +50,7 @@ namespace CapaPresentacionAdmin.Controllers
                     return RedirectToAction("CambiarClave");
                 }
 
+                FormsAuthentication.SetAuthCookie(oUsuario.Correo, false);
                 ViewBag.Error = null;
 
                 return RedirectToAction("Index", "Home");
@@ -77,11 +80,14 @@ namespace CapaPresentacionAdmin.Controllers
                 return View();
             }
             ViewData["vclave"] = "";
-            CN_Recursos.ConvertirSha256(nuevaclave);
+
+            // Convertimos la nueva clave a SHA256 antes de guardarla
+            string claveHash = CN_Recursos.ConvertirSha256(nuevaclave);
 
             string mensaje = string.Empty;
 
-            bool respuesta = new CN_Usuarios().CambiarClave( int.Parse(idusuario), nuevaclave, out mensaje);
+            // Guardamos la clave hasheada en la base de datos
+            bool respuesta = new CN_Usuarios().CambiarClave(int.Parse(idusuario), claveHash, out mensaje);
 
             if (respuesta)
             {
@@ -95,6 +101,40 @@ namespace CapaPresentacionAdmin.Controllers
             }
 
            
+        }
+
+        [HttpPost]
+        public ActionResult Reestablecer(string correo)
+        {
+            Usuario ousuario = new Usuario();
+
+            ousuario = new CN_Usuarios().Listar().Where(item => item.Correo == correo).FirstOrDefault();
+
+            if (ousuario == null)
+            {
+                ViewBag.Error = "No se encontro un usuario relacionado a ese correo";
+                return View();
+            }
+
+            string mensaje = string.Empty;
+            bool respuesta = new CN_Usuarios().ReestablecerClave(ousuario.IdUsuario, correo, out mensaje);
+
+            if (respuesta)
+            {
+                ViewBag.Error = null;
+                return RedirectToAction("Index", "Acceso");
+            }
+            else
+            {
+                ViewBag.Error = mensaje;
+                return View();
+            }
+        }
+
+        public ActionResult CerrarSesion()
+        {
+            FormsAuthentication.SignOut();
+            return RedirectToAction("Index", "Acceso");
         }
 
     }

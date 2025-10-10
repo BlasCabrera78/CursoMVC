@@ -111,9 +111,17 @@ namespace CapaNegocios
             {
                 string asunto = "Clave Reestablecida";
                 string mensajeCorreo = "<h3>Su cuenta fue creestablecida correctamente!</h3></br><p>Su clave para acceder es: !clave!</p>";
-                mensajeCorreo = mensajeCorreo.Replace("!Su nueva clave es!", nuevaclave);
+                mensajeCorreo = mensajeCorreo.Replace("!clave!", nuevaclave);
 
                 bool respuesta = CN_Recursos.EnviarCorrero(correo, asunto, mensajeCorreo);
+                if (!respuesta)
+                {
+                    Console.WriteLine("Fallo el envío del correo");
+                }
+                else
+                {
+                    Console.WriteLine("Correo enviado correctamente");
+                }
 
                 if (respuesta)
                 {
