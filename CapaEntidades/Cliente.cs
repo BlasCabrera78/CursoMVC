@@ -13,6 +13,7 @@ namespace CapaEntidades
         public String Apellidos { get; set; }
         public String Correo { get; set; }
         public String Clave { get; set; }
+        public String ConfirmarClave { get; set; }
         public bool Reestablecer { get; set; }
     }
 }
