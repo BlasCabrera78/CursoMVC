@@ -6,7 +6,7 @@ using System.Web.Mvc;
 
 namespace CapaPresentacionTienda.Controllers
 {
-    public class TeindaController : Controller
+    public class TiendaController : Controller
     {
         // GET: Teinda
         public ActionResult Index()
