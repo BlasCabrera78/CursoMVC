@@ -19,8 +19,12 @@ namespace CapaPresentacionTienda
                 "~/Scripts/sweetalert.js"
             ));
 
+            bundles.Add(new ScriptBundle("~/bundles/modernizr").Include(
+            "~/Scripts/modernizr-*"));
+
+
             bundles.Add(new StyleBundle("~/Content/css").Include(
-                "~/Content/site.css",
+                "~/Content/Site.css",
                 "~/Content/sweetalert.css"
             ));
         }
