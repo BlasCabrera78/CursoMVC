@@ -17,6 +17,24 @@ namespace CapaPresentacionTienda.Controllers
             return View();
         }
 
+        public ActionResult DetalleProducto(int idproducto = 0)
+        {
+            bool conversion;
+            var oProducto = new CN_Producto().Listar()
+                              .FirstOrDefault(p => p.IdProducto == idproducto);
+
+            if (oProducto != null)
+            {
+                oProducto.base64 = CN_Recursos.ConvertirBase64(
+                    Path.Combine(oProducto.RutaImagen, oProducto.NombreImagen),
+                    out conversion
+                );
+                oProducto.Extencion = Path.GetExtension(oProducto.NombreImagen); // ".png", ".jpg", etc.
+            }
+
+            return View(oProducto); // IMPORTANTE: pasar el modelo a la vista
+        }
+
         [HttpGet]
         public JsonResult ListarCategorias()
         {

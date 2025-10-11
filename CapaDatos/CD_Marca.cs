@@ -157,10 +157,11 @@ namespace CapaDatos
                 {
                     StringBuilder sb = new StringBuilder();
 
-                    sb.AppendLine("select distinct m.IdMarca,m.Descripcion from PRODUCTO p");
+                    sb.AppendLine("select distinct m.IdMarca, m.Descripcion from PRODUCTO p");
                     sb.AppendLine("inner join CATEGORIA c on c.IdCategoria = p.IdCategoria");
                     sb.AppendLine("inner join MARCA m on m.IdMarca = p.IdMarca and m.Activo = 1");
-                    sb.AppendLine("where c.IdCategoria = iif(@idcategoria = 0, c.IdCategoria, @idcategoria)");
+                    sb.AppendLine("where (@idcategoria = 0 OR c.IdCategoria = @idcategoria)");
+
 
                     SqlCommand cmd = new SqlCommand(sb.ToString(), oconexion);
                     cmd.Parameters.AddWithValue("@idcategoria", idcategoria);
