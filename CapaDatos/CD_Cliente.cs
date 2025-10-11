@@ -19,7 +19,7 @@ namespace CapaDatos
             {
                 using (SqlConnection oconexion = new SqlConnection(Conexion.cn))
                 {
-                    string query = "select IdUsuario,Nombre,Apellidos,Correo,Clave,Reestablecer from CLIENTE";
+                    string query = "select IdCliente,Nombre,Apellidos,Correo,Clave,Reestablecer from CLIENTE";
 
                     SqlCommand cmd = new SqlCommand(query, oconexion);
                     cmd.CommandType = CommandType.Text;
@@ -33,7 +33,7 @@ namespace CapaDatos
                             lista.Add(
                                 new Cliente()
                                 {
-                                    IdCliente = Convert.ToInt32(dr["IdUsuario"]),
+                                    IdCliente = Convert.ToInt32(dr["IdCliente"]),
                                     Nombre = dr["Nombre"].ToString(),
                                     Apellidos = dr["Apellidos"].ToString(),
                                     Correo = dr["Correo"].ToString(),
@@ -122,7 +122,7 @@ namespace CapaDatos
             {
                 using (SqlConnection oconexion = new SqlConnection(Conexion.cn))
                 {
-                    SqlCommand cmd = new SqlCommand("update cliente set clave  = @clave, reestablecer = 1 where idusuario = @id", oconexion);
+                    SqlCommand cmd = new SqlCommand("update CLIENTE set clave  = @clave, reestablecer = 1 where IdCliente = @id", oconexion);
                     cmd.Parameters.AddWithValue("@id", idCliente);
                     cmd.Parameters.AddWithValue("@clave", clave);
                     cmd.CommandType = CommandType.Text;

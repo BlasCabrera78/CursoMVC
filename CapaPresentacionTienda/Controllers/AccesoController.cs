@@ -18,7 +18,7 @@ namespace CapaPresentacionTienda.Controllers
         }
 
         // GET: Acceso/Details/5
-        public ActionResult Registrar(int id)
+        public ActionResult Registrar()
         {
             return View();
         }
@@ -80,7 +80,7 @@ namespace CapaPresentacionTienda.Controllers
             {
                 if (oCliente.Reestablecer)
                 {
-                    TempData["IdCleinte"] = oCliente.IdCliente;
+                    TempData["IdCliente"] = oCliente.IdCliente;
                     return RedirectToAction("CambiarClave", "Acceso");
                 }
                 else 
@@ -125,22 +125,23 @@ namespace CapaPresentacionTienda.Controllers
         }
 
         [HttpPost]
-        public ActionResult CambiarClave(string idcliente, string claveactual, string nuevaclave, string confirmaclave)
+        public ActionResult CambiarClave(string IdCliente, string claveactual, string nuevaclave, string confirmaclave)
         {
             Cliente oCliente = new Cliente();
+            Console.WriteLine($"IdCliente recibido: '{IdCliente}'");
 
             oCliente = new CN_Cliente().Listar()
-                .Where(u => u.IdCliente == int.Parse(idcliente)).FirstOrDefault();
+                .Where(u => u.IdCliente == int.Parse(IdCliente)).FirstOrDefault();
 
             if (oCliente.Clave != CN_Recursos.ConvertirSha256(claveactual))
             {
-                TempData["IdUsuario"] = idcliente;
+                TempData["IdCliente"] = IdCliente;
                 ViewBag.Error = "La contraseña actual no es correcta";
                 return View();
             }
             else if (nuevaclave != confirmaclave)
             {
-                TempData["IdCliente"] = idcliente;
+                TempData["IdCliente"] = IdCliente;
                 ViewData["vclave"] = claveactual;
                 ViewBag.Error = "Las contraseñas no coinciden";
                 return View();
@@ -153,7 +154,7 @@ namespace CapaPresentacionTienda.Controllers
             string mensaje = string.Empty;
 
             // Guardamos la clave hasheada en la base de datos
-            bool respuesta = new CN_Usuarios().CambiarClave(int.Parse(idcliente), claveHash, out mensaje);
+            bool respuesta = new CN_Cliente().CambiarClave(int.Parse(IdCliente), claveHash, out mensaje);
 
             if (respuesta)
             {
@@ -161,7 +162,7 @@ namespace CapaPresentacionTienda.Controllers
             }
             else
             {
-                TempData["IdCliente"] = idcliente;
+                TempData["IdCliente"] = IdCliente;
                 ViewBag.Error = mensaje;
                 return View();
             }
