@@ -1,5 +1,7 @@
 ﻿using CapaDatos;
 using CapaEntidades;
+using CapaEntidades.Paypal;
+using CapaNegocio;
 using CapaNegocios;
 using System;
 using System.Collections.Generic;
@@ -8,14 +10,15 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Web;
 using System.Web.Mvc;
+
+// Alias para evitar conflictos entre capas
+using Pay = CapaEntidades.Paypal;
 
 namespace CapaPresentacionTienda.Controllers
 {
     public class TiendaController : Controller
     {
-        // GET: Teinda
         public ActionResult Index()
         {
             return View();
@@ -224,61 +227,154 @@ namespace CapaPresentacionTienda.Controllers
         [HttpPost]
         public async Task<JsonResult> ProcesarPago(List<Carrito> oListaCarrito, Venta oVenta)
         {
+            decimal total = 0m;
 
-            decimal total = 0;
-
-            DataTable detalle_venta = new DataTable();
-            detalle_venta.Locale = new CultureInfo("es-PE");
+            // Crear DataTable para el detalle de la venta
+            var detalle_venta = new DataTable { Locale = new CultureInfo("es-PE") };
             detalle_venta.Columns.Add("IdProducto", typeof(string));
             detalle_venta.Columns.Add("Cantidad", typeof(int));
             detalle_venta.Columns.Add("Total", typeof(decimal));
 
-            foreach (Carrito oCarrito in oListaCarrito)
-            {
-                decimal subtotal = Convert.ToDecimal(oCarrito.Cantidad.ToString()) * oCarrito.oProducto.Precio;
+            // Lista de items PayPal
+            var oListaItem = new List<Pay.Item>();
 
+            foreach (var oCarrito in oListaCarrito)
+            {
+                decimal subtotal = Convert.ToDecimal(oCarrito.Cantidad) * oCarrito.oProducto.Precio;
                 total += subtotal;
 
-                detalle_venta.Rows.Add(new object[] {
+                oListaItem.Add(new Pay.Item
+                {
+                    name = oCarrito.oProducto.Nombre,
+                    quantity = oCarrito.Cantidad.ToString(),
+                    unit_amount = new Pay.UnitAmount
+                    {
+                        currency_code = "USD",
+                        value = oCarrito.oProducto.Precio.ToString("G", new CultureInfo("es-PE"))
+                    }
+                });
+
+                detalle_venta.Rows.Add(new object[]
+                {
             oCarrito.oProducto.IdProducto,
             oCarrito.Cantidad,
             subtotal
-        });
+                });
             }
 
+            // Crear la unidad de compra (PurchaseUnit)
+            var purchaseUnit = new Pay.PurchaseUnit
+            {
+                amount = new Pay.Amount
+                {
+                    currency_code = "USD",
+                    value = total.ToString("G", new CultureInfo("es-PE")),
+                    breakdown = new Pay.Breakdown
+                    {
+                        item_total = new Pay.ItemTotal
+                        {
+                            currency_code = "USD",
+                            value = total.ToString("G", new CultureInfo("es-PE"))
+                        }
+                    }
+                },
+                description = "compra de articulo de mi tienda",
+                items = oListaItem
+            };
+
+            // Crear la orden para PayPal
+            var oCheckOutOrder = new Pay.Checkout_Order
+            {
+                intent = "CAPTURE",
+                purchase_units = new List<Pay.PurchaseUnit> { purchaseUnit },
+                application_context = new Pay.ApplicationContext
+                {
+                    brand_name = "MiTienda.com",
+                    landing_page = "NO_PREFERENCE",
+                    user_action = "PAY_NOW",
+                    return_url = "https://localhost:44303/Tienda/PagoEfectuado",
+                    cancel_url = "https://localhost:44303/Tienda/Carrito"
+                }
+            };
+
+            // Datos de la venta
             oVenta.MontoTotal = total;
             oVenta.IdCliente = ((Cliente)Session["Cliente"]).IdCliente;
 
+            // Mantener datos temporales para cuando PayPal regrese
             TempData["Venta"] = oVenta;
             TempData["DetalleVenta"] = detalle_venta;
 
-            return Json(new { Status = true, Link = "/Tienda/PagoEfectuado?idTransaccion=code00018&status=true" }, JsonRequestBehavior.AllowGet);
+            // Crear la orden en PayPal
+            var opaypal = new CN_Paypal();
+            CapaNegocio.Response_Paypal<Pay.Response_Checkout> response_paypal =
+                await opaypal.CrearSolicitud(oCheckOutOrder);
+
+            // Retornar la respuesta JSON con los datos de PayPal
+            return Json(response_paypal, JsonRequestBehavior.AllowGet);
         }
 
+
+        [HttpGet]
         public async Task<ActionResult> PagoEfectuado()
         {
+            string token = Request.QueryString["token"];
 
-            string idtransaccion = Request.QueryString["idTransaccion"];
-            bool status = Convert.ToBoolean(Request.QueryString["status"]);
+            var opaypal = new CN_Paypal();
+            var response_paypal = new CapaNegocio.Response_Paypal<Pay.Response_Capture>();
 
-            ViewData["Status"] = status;
+            // Captura del pago en PayPal
+            response_paypal = await opaypal.AprobarPago(token);
 
-            if (status)
+            ViewData["Status"] = response_paypal.Status;
+
+            if (response_paypal.Status)
             {
-
+                // Recuperar datos de la venta almacenados en TempData
                 Venta oVenta = (Venta)TempData["Venta"];
                 DataTable detalle_venta = (DataTable)TempData["DetalleVenta"];
 
-                oVenta.IdTransaccion = idtransaccion;
+                // Guardar el ID de transacción devuelto por PayPal
+                oVenta.IdTransaccion = response_paypal.Response.purchase_units[0].payments.captures[0].id;
 
                 string mensaje = string.Empty;
-
                 bool respuesta = new CN_Venta().Registrar(oVenta, detalle_venta, out mensaje);
 
                 ViewData["IdTransaccion"] = oVenta.IdTransaccion;
             }
 
             return View();
+        }
+
+        public ActionResult MisCompras()
+        {
+            int idcliente = ((Cliente)Session["Cliente"]).IdCliente;
+
+            List<DetalleVenta> oLista = new List<DetalleVenta>();
+            bool conversion;
+
+            oLista = new CN_Venta()
+                .ListarCompras(idcliente)
+                .Select(oc => new DetalleVenta()
+                {
+                    oProducto = new Producto()
+                    {
+                        Nombre = oc.oProducto.Nombre,
+                        Precio = oc.oProducto.Precio,
+                        base64 = CN_Recursos.ConvertirBase64(
+                                      Path.Combine(oc.oProducto.RutaImagen, oc.oProducto.NombreImagen),
+                                      out conversion),
+                        Extencion = Path.GetExtension(oc.oProducto.NombreImagen)
+                    },
+                    Cantidad = oc.Cantidad,
+                    Total = oc.Total,
+                    IdTransaccion = oc.IdTransaccion
+                })
+                .ToList();
+
+            return Json(new { data = oLista }, JsonRequestBehavior.AllowGet);
+            // Si en tu vista devuelves View:
+            // return View(oLista);
         }
 
     }
