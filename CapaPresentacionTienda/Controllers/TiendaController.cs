@@ -11,6 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Web.Mvc;
+using CapaPresentacionTienda.Filter;
 
 // Alias para evitar conflictos entre capas
 using Pay = CapaEntidades.Paypal;
@@ -24,6 +25,8 @@ namespace CapaPresentacionTienda.Controllers
             return View();
         }
 
+        [ValidarSession]
+        [Authorize]
         public ActionResult Carrito()
         {
             return View();
@@ -315,6 +318,8 @@ namespace CapaPresentacionTienda.Controllers
         }
 
 
+        [ValidarSession]
+        [Authorize]
         [HttpGet]
         public async Task<ActionResult> PagoEfectuado()
         {
@@ -346,6 +351,8 @@ namespace CapaPresentacionTienda.Controllers
             return View();
         }
 
+        [ValidarSession]
+        [Authorize]
         public ActionResult MisCompras()
         {
             int idcliente = ((Cliente)Session["Cliente"]).IdCliente;
