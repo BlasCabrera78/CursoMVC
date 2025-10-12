@@ -1,4 +1,5 @@
-﻿using CapaEntidades;
+﻿using CapaDatos;
+using CapaEntidades;
 using CapaNegocios;
 using System;
 using System.Collections.Generic;
@@ -153,29 +154,37 @@ namespace CapaPresentacionTienda.Controllers
         [HttpPost]
         public JsonResult OperacionCarrito(int idproducto, bool sumar)
         {
-            int idCliente = ((Cliente)Session["Cliente"]).IdCliente;
+            try
+            {
+                int idcliente = ((Cliente)Session["Cliente"]).IdCliente;
 
-            bool respuesta = false;
-            string mensaje = string.Empty;
+                var cd = new CD_Carrito();
+                bool ok = cd.OperacionCarrito(idcliente, idproducto, sumar, out string mensaje);
 
-            respuesta = new CN_Carrito().OperacionCarrito(idCliente, idproducto, true, out mensaje);
-
-            return Json(new { respuesta = respuesta, mensaje = mensaje }, JsonRequestBehavior.AllowGet);
+                return Json(new { respuesta = ok, mensaje = mensaje }, JsonRequestBehavior.AllowGet);
+            }
+            catch
+            {
+                return Json(new { respuesta = false, mensaje = "Error interno." }, JsonRequestBehavior.AllowGet);
+            }
         }
 
         [HttpPost]
-        public JsonResult EliminarCarrito(int idproducto)
+        public JsonResult EliminarDeCarrito(int idproducto)
         {
+            try
+            {
+                int idcliente = ((Cliente)Session["Cliente"]).IdCliente;
 
-            int idCliente = ((Cliente)Session["Cliente"]).IdCliente;
+                var cd = new CD_Carrito();
+                bool ok = cd.EliminarCarrito(idcliente, idproducto);
 
-            bool respuesta = false;
-
-            string mensaje = string.Empty;
-
-            respuesta = new CN_Carrito().EliminarCarrito(idCliente, idproducto);
-
-            return Json(new { respuesta = respuesta, mensaje = mensaje }, JsonRequestBehavior.AllowGet);
+                return Json(new { respuesta = ok }, JsonRequestBehavior.AllowGet);
+            }
+            catch
+            {
+                return Json(new { respuesta = false, mensaje = "Error interno." }, JsonRequestBehavior.AllowGet);
+            }
         }
 
         [HttpPost]

@@ -3,6 +3,9 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
+<!-- Agregamos el link correcto de Font Awesome sin integrity -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" referrerpolicy="no-referrer" />
+
 <div class="container my-5">
     <div class="row">
         <div class="col-sm-12">
@@ -12,7 +15,7 @@
                     <!-- Encabezado -->
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="ms-2 mt-2">Detalle Carrito</h5>
-                        <a class="btn btn-primary" href="@Url.Action("Index","Inicio")">
+                        <a class="btn btn-primary" href="@Url.Action("Index","Tienda")">
                             <i class="fas fa-cart-plus"></i> Seguir Comprando
                         </a>
                     </div>
@@ -22,57 +25,12 @@
                     <div class="row">
                         <!-- Columna izquierda: Productos -->
                         <div class="col-sm-9">
-                            <div id="productos-carrito">
-                                <!-- Ejemplo de producto -->
-                                <div class="card mb-2 card-producto">
-                                    <div class="card-body">
-                                        <div class="row align-items-center">
+                            <div id="productos-carrito"></div>
 
-                                            <!-- Imagen -->
-                                            <div class="col-sm-2 text-center">
-                                                <img class="rounded"
-                                                     src="https://dummyimage.com/450x300/dee2e6/6c757d.jpg"
-                                                     style="width:100px;height:100px" />
-                                            </div>
-
-                                            <!-- Marca y Nombre -->
-                                            <div class="col-sm-4">
-                                                <span class="fw-bold d-block">Marca</span>
-                                                <span>Nombre Producto</span>
-                                            </div>
-
-                                            <!-- Precio -->
-                                            <div class="col-sm-2">
-                                                <span>Precio : S/. 1500</span>
-                                            </div>
-
-                                            <!-- Cantidad -->
-                                            <div class="col-sm-2">
-                                                <div class="d-flex justify-content-center align-items-center">
-                                                    <button class="btn btn-outline-secondary btn-restar rounded-0">
-                                                        <i class="fas fa-minus"></i>
-                                                    </button>
-                                                    <input class="form-control input-cantidad p-1 text-center rounded-0 mx-1"
-                                                           disabled
-                                                           value="1"
-                                                           style="width:40px" />
-                                                    <button class="btn btn-outline-secondary btn-sumar rounded-0">
-                                                        <i class="fas fa-plus"></i>
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            <!-- Eliminar -->
-                                            <div class="col-sm-2 text-center">
-                                                <button class="btn btn-outline-danger btn-eliminar">
-                                                    <i class="far fa-trash-alt"></i> Eliminar
-                                                </button>
-                                            </div>
-
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- /Ejemplo de producto -->
+                            <div class="d-flex justify-content-end mt-3">
+                                <label class="align-self-center">
+                                    <b>Total: USD <span id="total">0.00</span></b>
+                                </label>
                             </div>
                         </div>
 
@@ -100,26 +58,17 @@
 
                                         <div class="mb-2">
                                             <label for="txtnombrecontacto" class="form-label">Nombre Contacto:</label>
-                                            <input type="text"
-                                                   class="form-control form-control-sm"
-                                                   id="txtnombrecontacto"
-                                                   autocomplete="off" />
+                                            <input type="text" class="form-control form-control-sm" id="txtnombrecontacto" autocomplete="off" />
                                         </div>
 
                                         <div class="mb-2">
                                             <label for="txtdireccion" class="form-label">Dirección:</label>
-                                            <input type="text"
-                                                   class="form-control form-control-sm"
-                                                   id="txtdireccion"
-                                                   autocomplete="off" />
+                                            <input type="text" class="form-control form-control-sm" id="txtdireccion" autocomplete="off" />
                                         </div>
 
                                         <div class="mb-3">
                                             <label for="txttelefono" class="form-label">Teléfono:</label>
-                                            <input type="text"
-                                                   class="form-control form-control-sm"
-                                                   id="txttelefono"
-                                                   autocomplete="off" />
+                                            <input type="text" class="form-control form-control-sm" id="txttelefono" autocomplete="off" />
                                         </div>
 
                                         <div class="d-grid">
@@ -138,104 +87,211 @@
     </div>
 </div>
 
-@section scripts
-    {
-    <script>
+@section scripts {
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
         $(document).ready(function () {
-        ListarDepartamento();
-    });
+            cargarCarrito();
+            ListarDepartamento();
+            $.ajax({
+                url: '@Url.Action("ListarProductosCarrito", "Tienda")',
+                type: "POST",
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                success: function (response) {
 
-    function ListarDepartamento() {
+                    $("#productos-carrito").html("");
+                    $("#productos-carrito").LoadingOverlay && $("#productos-carrito").LoadingOverlay("hide");
 
-        $("<option>")
-            .attr({ "value": "00", "disabled": "disabled", "selected": "true" })
-            .text("Seleccionar")
-            .appendTo("#cbodepartamento");
+                    $.each(response.data, function (i, item) {
 
-        jQuery.ajax({
-            url: '@Url.Action("ObtenerDepartamento", "Tienda")',
-            type: "POST",
-            dataType: "json",
-            contentType: "application/json; charset=utf-8",
-            success: function (data) {
+                        $("<div>").addClass("card mb-2 card-producto").append(
+                            $("<div>").addClass("card-body").append(
+                                $("<div>").addClass("row align-items-center").append(
 
-                if (data.lista != null) {
+                                    $("<div>").addClass("col-sm-2 text-center").append(
+                                        $("<img>").addClass("rounded")
+                                            .attr({
+                                                "src": "data:image/" + item.oProducto.Extension + ";base64," + item.oProducto.base64,
+                                                "alt": item.oProducto.Nombre
+                                            })
+                                            .css({ "width": "100px", "height": "100px", "object-fit": "cover" })
+                                    ),
 
-                    $.each(data.lista, function (i, item) {
-                        $("<option>")
-                            .attr({ "value": item.IdDepartamento })
-                            .text(item.Descripcion)
-                            .appendTo("#cbodepartamento");
+                                    $("<div>").addClass("col-sm-4").append(
+                                        $("<span>").addClass("fw-bold d-block").text(item.oProducto.oMarca.Descripcion),
+                                        $("<span>").text(item.oProducto.Nombre)
+                                    ),
+
+                                    $("<div>").addClass("col-sm-2 text-center").append(
+                                        $("<span>").text(item.oProducto.Precio.toFixed(2) + " USD")
+                                    ),
+
+                                    $("<div>").addClass("col-sm-2 text-center").append(
+                                        $("<div>").addClass("input-group input-group-sm justify-content-center").append(
+                                            $("<button>").addClass("btn btn-outline-secondary btn-restar")
+                                                .append($("<i>").addClass("fas fa-minus")),
+                                            $("<input>").addClass("form-control text-center p-1 input-cantidad")
+                                                .attr({ "disabled": true })
+                                                .css({ "max-width": "40px" })
+                                                .data("oProducto", item.oProducto)
+                                                .val(item.Cantidad),
+                                            $("<button>").addClass("btn btn-outline-secondary btn-sumar")
+                                                .append($("<i>").addClass("fas fa-plus"))
+                                        )
+                                    ),
+
+                                    $("<div>").addClass("col-sm-2 text-center").append(
+                                        $("<button>").addClass("btn btn-outline-danger btn-eliminar")
+                                            .append($("<i>").addClass("far fa-trash-alt me-1"))
+                                            .append("Eliminar")
+                                    )
+                                )
+                            )
+                        ).appendTo("#productos-carrito");
+
                     });
 
+                    sumarTotal();
                 }
-            }
+            });
+
+            ListarDepartamento();
         });
+
+        function cargarCarrito() {
+            $.ajax({
+                url: '@Url.Action("ListarProductosCarrito", "Tienda")',
+                type: "POST",
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                success: function (response) {
+                    $("#productos-carrito").empty();
+
+                    $.each(response.data, function (i, item) {
+                        $("<div>").addClass("card mb-2 card-producto").append(
+                            $("<div>").addClass("card-body").append(
+                                $("<div>").addClass("row align-items-center").append(
+
+                                    $("<div>").addClass("col-sm-2 text-center").append(
+                                        $("<img>").addClass("rounded")
+                                            .attr({
+                                                "src": "data:image/" + item.oProducto.Extension + ";base64," + item.oProducto.base64,
+                                                "alt": item.oProducto.Nombre
+                                            })
+                                            .css({ "width": "100px", "height": "100px", "object-fit": "cover" })
+                                    ),
+
+                                    $("<div>").addClass("col-sm-4").append(
+                                        $("<span>").addClass("fw-bold d-block").text(item.oProducto.oMarca.Descripcion),
+                                        $("<span>").text(item.oProducto.Nombre)
+                                    ),
+
+                                    $("<div>").addClass("col-sm-2 text-center").append(
+                                        $("<span>").text(item.oProducto.Precio.toFixed(2) + " USD")
+                                    ),
+
+                                    $("<div>").addClass("col-sm-2 text-center").append(
+                                        $("<div>").addClass("input-group input-group-sm justify-content-center").append(
+                                            $("<button>").addClass("btn btn-outline-secondary btn-restar")
+                                                .append($("<i>").addClass("fas fa-minus")),
+                                            $("<input>").addClass("form-control text-center p-1 input-cantidad")
+                                                .attr({ "disabled": true })
+                                                .css({ "max-width": "40px" })
+                                                .data("oProducto", item.oProducto)
+                                                .val(item.Cantidad),
+                                            $("<button>").addClass("btn btn-outline-secondary btn-sumar")
+                                                .append($("<i>").addClass("fas fa-plus"))
+                                        )
+                                    ),
+
+                                    $("<div>").addClass("col-sm-2 text-center").append(
+                                        $("<button>").addClass("btn btn-outline-danger btn-eliminar")
+                                            .append($("<i>").addClass("far fa-trash-alt me-1"))
+                                            .append("Eliminar")
+                                    )
+                                )
+                            )
+                        ).appendTo("#productos-carrito");
+                    });
+
+                    sumarTotal();
+                }
+            });
+        }
+
+        /* ---------- UTILIDADES DE UBIGEO (sin cambios sustanciales) ---------- */
+
+        function ListarDepartamento() {
+            $("<option>").attr({ "value": "00", "disabled": true, "selected": true })
+                .text("Seleccionar")
+                .appendTo("#cbodepartamento");
+
+            $.ajax({
+                url: '@Url.Action("ObtenerDepartamento", "Tienda")',
+                type: "POST",
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                success: function (data) {
+                    if (data.lista) {
+                        $.each(data.lista, function (i, item) {
+                            $("<option>").val(item.IdDepartamento).text(item.Descripcion)
+                                .appendTo("#cbodepartamento");
+                        });
+                    }
+                }
+            });
         }
 
         $("#cbodepartamento").on("change", function () {
             ListarProvincia();
         });
 
-     function ListarProvincia() {
+        function ListarProvincia() {
+            $("#cboprovincia").html("");
+            $("<option>").val("00").prop("selected", true).text("Seleccionar").appendTo("#cboprovincia");
 
-        $("#cboprovincia").html("");
-
-        $("<option>")
-            .attr({ "value": "00", "disabled": "disabled", "selected": "true" })
-            .text("Seleccionar")
-            .appendTo("#cboprovincia");
-
-        jQuery.ajax({
-            url: '@Url.Action("ObtenerProvincia", "Tienda")',
-            type: "POST",
-            data: JSON.stringify({ IdDepartamento: $("#cbodepartamento option:selected").val() }),
-            dataType: "json",
-            contentType: "application/json; charset=utf-8",
-            success: function (data) {
-
-                if (data.lista != null) {
-                    $.each(data.lista, function (i, item) {
-                        $("<option>")
-                            .attr({ "value": item.IdProvincia })
-                            .text(item.Descripcion)
-                            .appendTo("#cboprovincia");
-                    });
-                    ListarDistrito();
+            $.ajax({
+                url: '@Url.Action("ObtenerProvincia", "Tienda")',
+                type: "POST",
+                data: JSON.stringify({ IdDepartamento: $("#cbodepartamento").val() }),
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                success: function (data) {
+                    if (data.lista) {
+                        $.each(data.lista, function (i, item) {
+                            $("<option>").val(item.IdProvincia).text(item.Descripcion)
+                                .appendTo("#cboprovincia");
+                        });
+                        ListarDistrito();
+                    }
                 }
-            }
-        });
-    }
+            });
+        }
 
         $("#cboprovincia").on("change", function () {
             ListarDistrito();
         });
 
         function ListarDistrito() {
-
             $("#cbodistrito").html("");
+            $("<option>").val("00").prop("selected", true).text("Seleccionar").appendTo("#cbodistrito");
 
-            $("<option>")
-                .attr({ "value": "00", "disabled": "disabled", "selected": "true" })
-                .text("Seleccionar")
-                .appendTo("#cbodistrito");
-
-            jQuery.ajax({
-                url: '@Url.Action("ObtenerDistrito","Tienda")',
+            $.ajax({
+                url: '@Url.Action("ObtenerDistrito", "Tienda")',
                 type: "POST",
                 data: JSON.stringify({
-                    IdDepartamento: $("#cbodepartamento option:selected").val(),
-                    IdProvincia: $("#cboprovincia option:selected").val()
+                    IdDepartamento: $("#cbodepartamento").val(),
+                    IdProvincia: $("#cboprovincia").val()
                 }),
                 dataType: "json",
                 contentType: "application/json; charset=utf-8",
                 success: function (data) {
-
-                    if (data.lista != null) {
+                    if (data.lista) {
                         $.each(data.lista, function (i, item) {
-                            $("<option>")
-                                .attr({ "value": item.IdDistrito })
-                                .text(item.Descripcion)
+                            $("<option>").val(item.IdDistrito).text(item.Descripcion)
                                 .appendTo("#cbodistrito");
                         });
                     }
@@ -243,6 +299,158 @@
             });
         }
 
-    </script>
+        /* ----------------------- SUMAR TOTAL ----------------------- */
+
+        // Asegúrate de que esta función exista antes de llamarla
+        function sumarTotal() {
+            var sumaTotal = 0;
+            $(".input-cantidad").each(function () {
+                var producto = $(this).data("oProducto");
+                if (producto) {
+                    var precio = producto.Precio;
+                    var cantidad = parseFloat($(this).val());
+                    if (!isNaN(precio) && !isNaN(cantidad)) {
+                        sumaTotal += precio * cantidad;
+                    }
+                }
+            });
+            $("#total").text(sumaTotal.toFixed(2));
+            $("#total").data("sumatotal", sumaTotal);
+        }
+
+        /* --------------------- HANDLERS CARRITO --------------------- */
+
+        // Sumar o restar
+        $(document).on("click", ".btn-sumar, .btn-restar", function () {
+            var card_producto = $(this).closest(".card-producto");
+            var input_cantidad = card_producto.find(".input-cantidad");
+            var producto = input_cantidad.data("oProducto");
+
+            if (!producto) { console.error("No se encontró el producto asociado"); return; }
+
+            var idproducto = producto.IdProducto;
+            var sumar = $(this).hasClass("btn-sumar");
+
+            $.ajax({
+                url: '@Url.Action("OperacionCarrito", "Tienda")',
+                type: "POST",
+                data: JSON.stringify({ idproducto: idproducto, sumar: sumar }),
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                success: function (data) {
+                    if (data.respuesta) {
+                        if (sumar) {
+                            input_cantidad.val(parseInt(input_cantidad.val()) + 1);
+                        } else {
+                            var nueva = parseInt(input_cantidad.val()) - 1;
+                            if (nueva >= 1) {
+                                input_cantidad.val(nueva);
+                            } else {
+                                // Si quedó en 0, remover del DOM
+                                card_producto.remove();
+                            }
+                        }
+                        sumarTotal();
+                    } else {
+                        Swal.fire("", data.mensaje || "No se pudo procesar.", "warning");
+                    }
+                },
+                error: function (error) {
+                    console.error("Error en la operación del carrito:", error);
+                }
+            });
+        });
+
+        // Eliminar
+        $(document).on("click", ".btn-eliminar", function () {
+            var card_producto = $(this).closest(".card-producto");
+            var input_cantidad = card_producto.find(".input-cantidad");
+            var producto = input_cantidad.data("oProducto");
+            if (!producto) { console.error("No se encontró el producto asociado"); return; }
+
+            var idproducto = producto.IdProducto;
+
+            $.ajax({
+                url: '@Url.Action("EliminarDeCarrito", "Tienda")',
+                type: "POST",
+                data: JSON.stringify({ idproducto: idproducto }),
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                success: function (data) {
+                    if (data.respuesta) {
+                        card_producto.remove();
+                        sumarTotal();
+                    } else {
+                        Swal.fire("", data.mensaje || "No se pudo eliminar.", "warning");
+                    }
+                },
+                error: function (error) {
+                    console.error("Error al eliminar producto:", error);
+                }
+            });
+        });
+
+        function cargarCarrito() {
+        $.ajax({
+            url: '@Url.Action("ListarProductosCarrito", "Tienda")',
+            type: "POST",
+            dataType: "json",
+            contentType: "application/json; charset=utf-8",
+            success: function (response) {
+                $("#productos-carrito").empty();
+
+                $.each(response.data, function (i, item) {
+
+                    $("<div>").addClass("card mb-2 card-producto").append(
+                        $("<div>").addClass("card-body").append(
+                            $("<div>").addClass("row align-items-center").append(
+
+                                $("<div>").addClass("col-sm-2 text-center").append(
+                                    $("<img>").addClass("rounded")
+                                        .attr({
+                                            "src": "data:image/" + item.oProducto.Extension + ";base64," + item.oProducto.base64,
+                                            "alt": item.oProducto.Nombre
+                                        })
+                                        .css({ "width": "100px", "height": "100px", "object-fit": "cover" })
+                                ),
+
+                                $("<div>").addClass("col-sm-4").append(
+                                    $("<span>").addClass("fw-bold d-block").text(item.oProducto.oMarca.Descripcion),
+                                    $("<span>").text(item.oProducto.Nombre)
+                                ),
+
+                                $("<div>").addClass("col-sm-2 text-center").append(
+                                    $("<span>").text(item.oProducto.Precio.toFixed(2) + " USD")
+                                ),
+
+                                $("<div>").addClass("col-sm-2 text-center").append(
+                                    $("<div>").addClass("input-group input-group-sm justify-content-center").append(
+                                        $("<button>").addClass("btn btn-outline-secondary btn-restar")
+                                            .append($("<i>").addClass("fas fa-minus")),
+                                        $("<input>").addClass("form-control text-center p-1 input-cantidad")
+                                            .attr({ "disabled": true })
+                                            .css({ "max-width": "40px" })
+                                            .data("oProducto", item.oProducto)
+                                            .val(item.Cantidad),
+                                        $("<button>").addClass("btn btn-outline-secondary btn-sumar")
+                                            .append($("<i>").addClass("fas fa-plus"))
+                                    )
+                                ),
+
+                                $("<div>").addClass("col-sm-2 text-center").append(
+                                    $("<button>").addClass("btn btn-outline-danger btn-eliminar")
+                                        .append($("<i>").addClass("far fa-trash-alt me-1"))
+                                        .append("Eliminar")
+                                )
+                            )
+                        )
+                    ).appendTo("#productos-carrito");
+                });
+
+                sumarTotal();
+            }
+        });
 }
+</script>
+}}
 

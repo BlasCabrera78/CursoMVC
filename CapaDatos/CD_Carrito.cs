@@ -103,7 +103,19 @@ namespace CapaDatos
             {
                 using (SqlConnection oconexion = new SqlConnection(Conexion.cn))
                 {
-                    string query = "select * from fn_obtenerCarritoCliente(@idcliente)";
+                    string query = @"SELECT 
+                    p.IdProducto,
+                    p.Nombre,
+                    p.Precio,
+                    p.RutaImagen,
+                    p.NombreImagen,
+                    m.Descripcion AS DesMarca,
+                    c.Cantidad
+                FROM Carrito c
+                JOIN Producto p ON p.IdProducto = c.IdProducto
+                JOIN Marca m ON m.IdMarca = p.IdMarca
+                WHERE c.IdCliente = @idcliente
+                ORDER BY c.IdProducto;";
 
                     SqlCommand cmd = new SqlCommand(query, oconexion);
                     cmd.Parameters.AddWithValue("@idcliente", idcliente);
@@ -132,7 +144,7 @@ namespace CapaDatos
                     }
                 }
             }
-            catch (Exception)
+            catch
             {
                 lista = new List<Carrito>();
             }
