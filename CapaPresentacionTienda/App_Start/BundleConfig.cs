@@ -16,7 +16,7 @@ namespace CapaPresentacionTienda
                 "~/Scripts/bootstrap.bundle.js",
                 "~/Scripts/fontawesome/all.min.js",
                 "~/Scripts/loadingoverlay.min.js",
-                "~/Scripts/sweetalert.js"
+                "~/Scripts/sweetalert.min.js"
             ));
 
             bundles.Add(new ScriptBundle("~/bundles/modernizr").Include(

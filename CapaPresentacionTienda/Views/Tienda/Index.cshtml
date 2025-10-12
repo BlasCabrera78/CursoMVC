@@ -113,11 +113,15 @@
         </div>
     </div>
 </section>
-@section scripts {
+@section scripts
+{
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
         $(document).ready(function () {
             MostrarCategorias();
-            MostrarProductos(0,0);
+            MostrarProductos(0, 0);
 
             $("#btnaplicarfiltro").click(function () {
                 var _idcategoria = $("input[name=categoria]:checked").val();
@@ -180,6 +184,12 @@
                     $("#contenedor_producto").LoadingOverlay("hide");
 
                     $.each(response.data, function (i, element) {
+                        // Normalizar extensión -> mime (Extencion viene como ".png", ".jpg", etc.)
+                        var ext = (element.Extencion || "").replace(/^\./, '').toLowerCase();
+                        var mime = ext === 'png' ? 'png' :
+                                   ext === 'gif' ? 'gif' :
+                                   ext === 'webp' ? 'webp' : 'jpeg';
+
                         var cardFooterContent = $("<div>").addClass("d-grid gap-2");
 
                         @if (Session["Cliente"] != null) {
@@ -196,12 +206,12 @@
                         $("<div>").addClass("col mb-5").append(
                             $("<div>").addClass("card h-100").append(
                                 $("<img>").addClass("card-img-top").attr({
-                                    "src": "data:image/" + element.Extension + ";base64," + element.base64
+                                    "src": "data:image/" + mime + ";base64," + element.base64
                                 }),
                                 $("<div>").addClass("card-body p-4").append(
                                     $("<div>").addClass("text-center").append(
                                         $("<h5>").addClass("fw-bolder").text(element.Nombre),
-                                        "$" + element.Precio.toFixed(2) + " USD"
+                                        "$" + Number(element.Precio).toFixed(2) + " USD"
                                     )
                                 ),
                                 $("<div>").addClass("card-footer p-2 pt-0 border-top-0 bg-transparent").append(
@@ -255,5 +265,39 @@
                 }
             });
         }
+
+        // Click en Agregar al carrito
+        $(document).on("click", "button.agregarcarrito", function () {
+            jQuery.ajax({
+                url: '@Url.Action("AgregarCarrito", "Tienda")',
+                type: "POST",
+                data: JSON.stringify({ idproducto: $(this).data("idproducto") }),
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                success: function (data) {
+                    if (data.respuesta) {
+                        // Actualiza el contador del carrito
+                        if (typeof MostrarCantidadCarrito === "function") {
+                            MostrarCantidadCarrito();
+                        }
+
+                        Swal.fire({
+                            title: "Agregado al carrito",
+                            text: "¿Desea ir al carrito?",
+                            icon: "success",
+                            showCancelButton: true,
+                            confirmButtonText: "Sí",
+                            cancelButtonText: "No"
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.href = '@Url.Action("Carrito", "Tienda")';
+                            }
+                        });
+                    } else {
+                        Swal.fire("", data.mensaje || "No se pudo agregar al carrito.", "warning");
+                    }
+                }
+            });
+        });
     </script>
 }
