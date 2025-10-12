@@ -1,5 +1,4 @@
-﻿
-@{
+﻿@{
     ViewBag.Title = "Carrito";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
@@ -10,19 +9,80 @@
             <div class="card">
                 <div class="card-body">
 
+                    <!-- Encabezado -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="ms-2 mt-2">Detalle Carrito</h5>
+                        <a class="btn btn-primary" href="@Url.Action("Index","Inicio")">
+                            <i class="fas fa-cart-plus"></i> Seguir Comprando
+                        </a>
+                    </div>
+
+                    <hr class="mt-2 mb-4" />
+
                     <div class="row">
-                        <!-- Detalle Producto -->
+                        <!-- Columna izquierda: Productos -->
                         <div class="col-sm-9">
+                            <div id="productos-carrito">
+                                <!-- Ejemplo de producto -->
+                                <div class="card mb-2 card-producto">
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+
+                                            <!-- Imagen -->
+                                            <div class="col-sm-2 text-center">
+                                                <img class="rounded"
+                                                     src="https://dummyimage.com/450x300/dee2e6/6c757d.jpg"
+                                                     style="width:100px;height:100px" />
+                                            </div>
+
+                                            <!-- Marca y Nombre -->
+                                            <div class="col-sm-4">
+                                                <span class="fw-bold d-block">Marca</span>
+                                                <span>Nombre Producto</span>
+                                            </div>
+
+                                            <!-- Precio -->
+                                            <div class="col-sm-2">
+                                                <span>Precio : S/. 1500</span>
+                                            </div>
+
+                                            <!-- Cantidad -->
+                                            <div class="col-sm-2">
+                                                <div class="d-flex justify-content-center align-items-center">
+                                                    <button class="btn btn-outline-secondary btn-restar rounded-0">
+                                                        <i class="fas fa-minus"></i>
+                                                    </button>
+                                                    <input class="form-control input-cantidad p-1 text-center rounded-0 mx-1"
+                                                           disabled
+                                                           value="1"
+                                                           style="width:40px" />
+                                                    <button class="btn btn-outline-secondary btn-sumar rounded-0">
+                                                        <i class="fas fa-plus"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <!-- Eliminar -->
+                                            <div class="col-sm-2 text-center">
+                                                <button class="btn btn-outline-danger btn-eliminar">
+                                                    <i class="far fa-trash-alt"></i> Eliminar
+                                                </button>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- /Ejemplo de producto -->
+                            </div>
                         </div>
 
-                        <!-- Detalle Envío -->
+                        <!-- Columna derecha: Detalle Envío -->
                         <div class="col-sm-3">
-                            <div class="card">
+                            <div class="card h-100">
                                 <div class="card-body bg-light">
-                                    <h5 class="card-title">Detalle Envío</h5>
+                                    <h5 class="card-title text-center mb-3">Detalle Envío</h5>
 
                                     <form>
-
                                         <div class="mb-2">
                                             <label for="cbodepartamento" class="form-label">Departamento:</label>
                                             <select class="form-select form-select-sm" id="cbodepartamento"></select>
@@ -67,19 +127,122 @@
                                                 <i class="fab fa-paypal"></i> Terminar y Procesar Pago
                                             </button>
                                         </div>
-
                                     </form>
-
                                 </div>
                             </div>
                         </div>
-                        <!-- /Detalle Envío -->
-
-                    </div>
-
+                    </div> <!-- /row -->
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+@section scripts
+    {
+    <script>
+        $(document).ready(function () {
+        ListarDepartamento();
+    });
+
+    function ListarDepartamento() {
+
+        $("<option>")
+            .attr({ "value": "00", "disabled": "disabled", "selected": "true" })
+            .text("Seleccionar")
+            .appendTo("#cbodepartamento");
+
+        jQuery.ajax({
+            url: '@Url.Action("ObtenerDepartamento", "Tienda")',
+            type: "POST",
+            dataType: "json",
+            contentType: "application/json; charset=utf-8",
+            success: function (data) {
+
+                if (data.lista != null) {
+
+                    $.each(data.lista, function (i, item) {
+                        $("<option>")
+                            .attr({ "value": item.IdDepartamento })
+                            .text(item.Descripcion)
+                            .appendTo("#cbodepartamento");
+                    });
+
+                }
+            }
+        });
+        }
+
+        $("#cbodepartamento").on("change", function () {
+            ListarProvincia();
+        });
+
+     function ListarProvincia() {
+
+        $("#cboprovincia").html("");
+
+        $("<option>")
+            .attr({ "value": "00", "disabled": "disabled", "selected": "true" })
+            .text("Seleccionar")
+            .appendTo("#cboprovincia");
+
+        jQuery.ajax({
+            url: '@Url.Action("ObtenerProvincia", "Tienda")',
+            type: "POST",
+            data: JSON.stringify({ IdDepartamento: $("#cbodepartamento option:selected").val() }),
+            dataType: "json",
+            contentType: "application/json; charset=utf-8",
+            success: function (data) {
+
+                if (data.lista != null) {
+                    $.each(data.lista, function (i, item) {
+                        $("<option>")
+                            .attr({ "value": item.IdProvincia })
+                            .text(item.Descripcion)
+                            .appendTo("#cboprovincia");
+                    });
+                    ListarDistrito();
+                }
+            }
+        });
+    }
+
+        $("#cboprovincia").on("change", function () {
+            ListarDistrito();
+        });
+
+        function ListarDistrito() {
+
+            $("#cbodistrito").html("");
+
+            $("<option>")
+                .attr({ "value": "00", "disabled": "disabled", "selected": "true" })
+                .text("Seleccionar")
+                .appendTo("#cbodistrito");
+
+            jQuery.ajax({
+                url: '@Url.Action("ObtenerDistrito","Tienda")',
+                type: "POST",
+                data: JSON.stringify({
+                    IdDepartamento: $("#cbodepartamento option:selected").val(),
+                    IdProvincia: $("#cboprovincia option:selected").val()
+                }),
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                success: function (data) {
+
+                    if (data.lista != null) {
+                        $.each(data.lista, function (i, item) {
+                            $("<option>")
+                                .attr({ "value": item.IdDistrito })
+                                .text(item.Descripcion)
+                                .appendTo("#cbodistrito");
+                        });
+                    }
+                }
+            });
+        }
+
+    </script>
+}
 

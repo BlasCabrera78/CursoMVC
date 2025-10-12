@@ -1,12 +1,13 @@
 ﻿using CapaEntidades;
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Globalization;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading.Tasks;
-using System.Data.SqlClient;
-using System.Data;
-using System.Globalization;
 
 namespace CapaDatos
 {
@@ -100,9 +101,10 @@ namespace CapaDatos
                     string query = "select * from DISTRITO where IdProvincia = @idprovincia and IdDepartamento = @iddepartamento";
 
                     SqlCommand cmd = new SqlCommand(query, oconexion);
-                    cmd.Parameters.AddWithValue("@idprovincia", iddepartamento);
-                    cmd.Parameters.AddWithValue("@iddepartamento", idprovincia);
+                    cmd.Parameters.AddWithValue("@idprovincia", idprovincia);     // ✅ corregido
+                    cmd.Parameters.AddWithValue("@iddepartamento", iddepartamento); // ✅ corregido
                     cmd.CommandType = CommandType.Text;
+
 
                     oconexion.Open();
 
@@ -123,7 +125,7 @@ namespace CapaDatos
             }
             catch
             {
-                lista = new List<Distrito>(); // Nota: en el video se ve este error; debería ser List<Distrito>()
+                lista = new List<Distrito>();
             }
 
             return lista;
